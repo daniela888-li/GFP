@@ -7,6 +7,7 @@ import {
   ROUTE_DEFINITIONS,
   type RouteName,
 } from '../src/presentation/navigation/routes';
+import { CategoryManagementService } from '../src/business/categories/categoryManagement';
 import { AccountLoginService } from '../src/services/authentication/accountLogin';
 import { AccountRegistrationService } from '../src/services/authentication/accountRegistration';
 import { SessionManager } from '../src/services/session/sessionManager';
@@ -43,6 +44,11 @@ async function readyServices(withAccount = false) {
     registration: new AccountRegistrationService(dependencies),
     login: new AccountLoginService({ ...dependencies, sessions }),
     sessions,
+    categories: new CategoryManagementService({
+      database,
+      sessions,
+      random: nodeRandomBytes,
+    }),
   };
 }
 
@@ -147,7 +153,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
     );
   });
 
-  test('the route registry declares HU1 to HU10 and HU1 and HU2 are implemented', () => {
+  test('the route registry declares HU1 to HU10 and HU1, HU2 and HU8 are implemented', () => {
     const stories = Object.values(ROUTE_DEFINITIONS).map(route => route.story);
     expect(stories).toEqual([
       'HU1',
@@ -164,6 +170,26 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
       Object.values(ROUTE_DEFINITIONS)
         .filter(route => route.implemented)
         .map(route => route.story),
-    ).toEqual(['HU1', 'HU2']);
+    ).toEqual(['HU1', 'HU2', 'HU8']);
+  });
+});
+
+describe('HU8 access from the history (E06-D4)', () => {
+  test('after logging in, «Categorías» opens the categories screen and «Volver» returns', async () => {
+    await render(<App createServices={() => readyServices(true)} />);
+    await fireEvent.changeText(
+      await screen.findByTestId('login-identifier'),
+      '1001',
+    );
+    await fireEvent.changeText(
+      screen.getByTestId('login-password'),
+      'Clave123!',
+    );
+    await fireEvent.press(screen.getByTestId('login-submit'));
+    await fireEvent.press(await screen.findByTestId('open-categories'));
+    expect(await screen.findByTestId('categories-screen')).toBeTruthy();
+    expect(await screen.findByText('Alimentación')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('categories-back'));
+    expect(screen.getByTestId('provisional-HU5')).toBeTruthy();
   });
 });

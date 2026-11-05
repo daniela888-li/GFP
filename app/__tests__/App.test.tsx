@@ -8,6 +8,7 @@ import {
   ROUTE_DEFINITIONS,
   type RouteName,
 } from '../src/presentation/navigation/routes';
+import { MovementManagementService } from '../src/business/movements/movementManagement';
 import { CategoryManagementService } from '../src/business/categories/categoryManagement';
 import { AccountLoginService } from '../src/services/authentication/accountLogin';
 import { AccountRecoveryService } from '../src/services/authentication/accountRecovery';
@@ -49,6 +50,11 @@ async function readyServices(withAccount = false) {
     recovery: new AccountRecoveryService(dependencies),
     sessions,
     categories: new CategoryManagementService({
+      database,
+      sessions,
+      random: nodeRandomBytes,
+    }),
+    movements: new MovementManagementService({
       database,
       sessions,
       random: nodeRandomBytes,
@@ -203,7 +209,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
     );
   });
 
-  test('the route registry declares HU1 to HU10 and HU1, HU2, HU3 and HU8 are implemented', () => {
+  test('the route registry declares HU1 to HU10 and HU1, HU2, HU3, HU4 and HU8 are implemented', () => {
     const stories = Object.values(ROUTE_DEFINITIONS).map(route => route.story);
     expect(stories).toEqual([
       'HU1',
@@ -220,7 +226,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
       Object.values(ROUTE_DEFINITIONS)
         .filter(route => route.implemented)
         .map(route => route.story),
-    ).toEqual(['HU1', 'HU2', 'HU3', 'HU8']);
+    ).toEqual(['HU1', 'HU2', 'HU3', 'HU4', 'HU8']);
   });
 });
 
@@ -252,5 +258,56 @@ describe('HU8 access from the history (E06-D4)', () => {
     });
     expect(screen.getByTestId('provisional-HU5')).toBeTruthy();
     spy.mockRestore();
+  });
+});
+
+describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
+  async function login() {
+    await render(<App createServices={() => readyServices(true)} />);
+    await fireEvent.changeText(
+      await screen.findByTestId('login-identifier'),
+      '1001',
+    );
+    await fireEvent.changeText(
+      screen.getByTestId('login-password'),
+      'Clave123!',
+    );
+    await fireEvent.press(screen.getByTestId('login-submit'));
+    await screen.findByTestId('provisional-HU5');
+  }
+
+  test('saves a movement, confirms it and returns to the history', async () => {
+    await login();
+    await fireEvent.press(screen.getByTestId('open-movement-form'));
+    await fireEvent.changeText(
+      await screen.findByTestId('movement-amount'),
+      '45000',
+    );
+    await fireEvent.press(screen.getByTestId('movement-category'));
+    await fireEvent.press(
+      await screen.findByTestId('movement-category-option-food'),
+    );
+    await fireEvent.press(screen.getByTestId('movement-save'));
+    expect(await screen.findByTestId('movement-success')).toBeTruthy();
+    expect(
+      screen.getByText('El movimiento fue registrado exitosamente'),
+    ).toBeTruthy();
+    expect(screen.getByTestId('movement-success-amount')).toHaveTextContent(
+      '-$45.000',
+    );
+    await fireEvent.press(screen.getByTestId('movement-back-to-history'));
+    expect(await screen.findByTestId('provisional-HU5')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('open-movement-form'));
+    expect((await screen.findByTestId('movement-amount')).props.value).toBe('');
+  });
+
+  test('the bottom bar opens Análisis and Recomendaciones', async () => {
+    await login();
+    await fireEvent.press(screen.getByTestId('tab-financialAnalysis'));
+    expect(await screen.findByTestId('provisional-HU9')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('tab-recommendations'));
+    expect(await screen.findByTestId('provisional-HU10')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('tab-movementHistory'));
+    expect(await screen.findByTestId('provisional-HU5')).toBeTruthy();
   });
 });

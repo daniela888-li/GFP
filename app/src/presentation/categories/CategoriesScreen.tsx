@@ -73,6 +73,7 @@ export function CategoriesScreen({
   const [form, setForm] = useState<FormState>(null);
   const [toDelete, setToDelete] = useState<Category | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [reassignTotal, setReassignTotal] = useState<number | null>(null);
   const [dialog, setDialog] = useState<string | null>(null);
   const mounted = useRef(true);
 
@@ -112,6 +113,20 @@ export function CategoriesScreen({
     );
     return () => subscription.remove();
   }, [onBack]);
+
+  async function askDelete(category: Category) {
+    setReassignTotal(null);
+    setToDelete(category);
+    const result = await gateway.countMovements(session, category.id);
+    if (!mounted.current) {
+      return;
+    }
+    if (result.status === 'ok') {
+      setReassignTotal(result.total);
+    } else if (result.status === 'session_expired') {
+      onSessionExpired();
+    }
+  }
 
   async function confirmDelete() {
     if (toDelete === null || deleting) {
@@ -205,7 +220,9 @@ export function CategoriesScreen({
                 <Pressable
                   accessibilityLabel={TEXTS.accessibility.delete(category.name)}
                   accessibilityRole="button"
-                  onPress={() => setToDelete(category)}
+                  onPress={() => {
+                    askDelete(category);
+                  }}
                   style={styles.action}
                   testID={`category-delete-${category.id}`}
                 >
@@ -256,7 +273,11 @@ export function CategoriesScreen({
           ]}
           message={`${TEXTS.messages.deleteQuestion}\n\n«${toDelete.name}» · ${
             TEXTS.types[toDelete.type]
-          }\n\n${TEXTS.messages.deleteWarning}`}
+          }\n\n${TEXTS.messages.deleteWarning}${
+            reassignTotal !== null && reassignTotal > 0
+              ? `\n\n${TEXTS.messages.reassignCount(reassignTotal)}`
+              : ''
+          }`}
           onRequestClose={() => setToDelete(null)}
           testID="category-delete-dialog"
         />

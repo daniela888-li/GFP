@@ -158,9 +158,8 @@ export class CategoryRepository extends OwnedRepository {
     return result.rowsAffected === 1;
   }
 
-  // Devuelve false si la categoría no existe, es de otro usuario o es del sistema. En la
-  // Etapa 07 se reasignan antes, en la misma transacción, los movimientos a «Otros»
-  // (HU8-CA07c, E06-D7).
+  // Devuelve false si la categoría no existe, es de otro usuario o es del sistema. Antes se
+  // reasignan sus movimientos a «Otros», en la misma transacción (HU8-CA07c, E06-D7).
   async deleteOwn(session: UserSession, id: string): Promise<boolean> {
     const userId = this.ownerOf(session);
     const result = await this.executor.execute(

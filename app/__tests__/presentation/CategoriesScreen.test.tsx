@@ -260,6 +260,28 @@ describe('HU8 categories screen', () => {
     expect(stored.rows).toEqual([]);
   });
 
+  test('HU8 prototype: the delete modal counts the movements to reassign', async () => {
+    const { database, session, sessions } = await setup();
+    await createFromScreen('Viajes');
+    const userId = sessions.requireOwner(session);
+    const row = await database.execute(
+      'SELECT id FROM categories WHERE user_id = ?',
+      [userId],
+    );
+    const id = row.rows[0].id as string;
+    for (const movement of ['m1', 'm2', 'm3']) {
+      await database.execute(
+        `INSERT INTO movements (id, user_id, category_id, type, amount_cents, movement_date,
+           created_at, updated_at) VALUES (?, ?, ?, 'expense', 100, '2026-11-04', 1, 1)`,
+        [movement, userId, id],
+      );
+    }
+    await fireEvent.press(screen.getByTestId(`category-delete-${id}`));
+    expect(
+      await screen.findByText(/3 movimientos serán reasignados/),
+    ).toBeTruthy();
+  });
+
   test('E06-D4: the Android back button returns to the history', async () => {
     const listeners: Array<Parameters<typeof BackHandler.addEventListener>[1]> =
       [];

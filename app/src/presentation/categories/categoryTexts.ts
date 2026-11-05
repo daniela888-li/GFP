@@ -46,6 +46,10 @@ export const CATEGORY_TEXTS = {
     deleteQuestion: '¿Está seguro de eliminar esta categoría?',
     deleteWarning:
       "Los movimientos asociados a esta categoría serán reasignados automáticamente a la categoría 'Otros'.",
+    reassignCount: (total: number) =>
+      total === 1
+        ? '1 movimiento será reasignado'
+        : `${total} movimientos serán reasignados`,
     loadFailed: 'No fue posible cargar las categorías. Intenta de nuevo',
     saveFailed: 'No fue posible guardar la categoría. Intenta de nuevo',
     deleteFailed: 'No fue posible eliminar la categoría. Intenta de nuevo',

@@ -6,6 +6,8 @@ import { CategoriesScreen } from '../categories/CategoriesScreen';
 import type { MovementFilterInput } from '../../business/movements/movementRules';
 import { AnalysisScreen } from '../analysis/AnalysisScreen';
 import { BottomTabs } from '../components/BottomTabs';
+import { MessageDialog } from '../components/MessageDialog';
+import { TopBar } from '../components/TopBar';
 import { LoginScreen } from '../login/LoginScreen';
 import {
   MovementFormScreen,
@@ -53,6 +55,10 @@ export function AppNavigator({ services }: { services: AppServices }) {
   const [prefill, setPrefill] = useState<MovementPrefill | null>(null);
   const [historyFilters, setHistoryFilters] =
     useState<MovementFilterInput | null>(null);
+  // Recorrido de la sesión para Atrás y Adelante (E13-D2).
+  const [past, setPast] = useState<readonly RouteName[]>([]);
+  const [future, setFuture] = useState<readonly RouteName[]>([]);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const visible = resolveRoute(route, session, services.sessions.current());
   const clearScreenData = useCallback(() => {
     setSavedMovement(null);
@@ -60,19 +66,54 @@ export function AppNavigator({ services }: { services: AppServices }) {
     setPrefill(null);
     setHistoryFilters(null);
   }, []);
-  const expireSession = useCallback(() => {
+  const go = useCallback(
+    (next: RouteName) => {
+      if (next !== route) {
+        setPast(current => [...current, route]);
+        setFuture([]);
+      }
+      setRoute(next);
+    },
+    [route],
+  );
+  const leaveSession = useCallback(() => {
     clearScreenData();
+    setPast([]);
+    setFuture([]);
+    setConfirmingLogout(false);
     setSession(null);
     setRoute(ROUTES.login);
   }, [clearScreenData]);
+  const expireSession = leaveSession;
   const backToHistory = useCallback(() => {
     clearScreenData();
-    setRoute(ROUTES.movementHistory);
-  }, [clearScreenData]);
-  const openFilteredHistory = useCallback((filters: MovementFilterInput) => {
-    setHistoryFilters(filters);
-    setRoute(ROUTES.movementHistory);
-  }, []);
+    go(ROUTES.movementHistory);
+  }, [clearScreenData, go]);
+  const openFilteredHistory = useCallback(
+    (filters: MovementFilterInput) => {
+      setHistoryFilters(filters);
+      go(ROUTES.movementHistory);
+    },
+    [go],
+  );
+  const goBack = () => {
+    const previous = past[past.length - 1];
+    if (previous !== undefined) {
+      clearScreenData();
+      setPast(past.slice(0, -1));
+      setFuture([route, ...future]);
+      setRoute(previous);
+    }
+  };
+  const goForward = () => {
+    const [next, ...rest] = future;
+    if (next !== undefined) {
+      clearScreenData();
+      setPast([...past, route]);
+      setFuture(rest);
+      setRoute(next);
+    }
+  };
   // Análisis y Recomendaciones vuelven al historial con el botón Atrás de Android. En el
   // historial, Atrás conserva el comportamiento del sistema y no regresa al inicio de sesión.
   useEffect(() => {
@@ -93,10 +134,20 @@ export function AppNavigator({ services }: { services: AppServices }) {
   }, [visible, backToHistory]);
   const openTab = (tab: RouteName) => {
     clearScreenData();
-    setRoute(tab);
+    go(tab);
   };
   const withTabs = (content: ReactNode) => (
     <View style={LAYOUT}>
+      <TopBar
+        backLabel={MOVEMENT_TEXTS.navigation.back}
+        canGoBack={past.length > 0}
+        canGoForward={future.length > 0}
+        forwardLabel={MOVEMENT_TEXTS.navigation.forward}
+        logoutLabel={MOVEMENT_TEXTS.navigation.logout}
+        onBack={goBack}
+        onForward={goForward}
+        onLogout={() => setConfirmingLogout(true)}
+      />
       <View style={LAYOUT}>{content}</View>
       <BottomTabs
         active={
@@ -123,6 +174,29 @@ export function AppNavigator({ services }: { services: AppServices }) {
           },
         ]}
       />
+      {confirmingLogout && (
+        <MessageDialog
+          actions={[
+            {
+              label: MOVEMENT_TEXTS.navigation.cancel,
+              onPress: () => setConfirmingLogout(false),
+              testID: 'logout-cancel',
+              variant: 'secondary',
+            },
+            {
+              label: MOVEMENT_TEXTS.navigation.confirm,
+              onPress: () => {
+                services.sessions.end();
+                leaveSession();
+              },
+              testID: 'logout-confirm',
+            },
+          ]}
+          message={MOVEMENT_TEXTS.navigation.logoutQuestion}
+          onRequestClose={() => setConfirmingLogout(false)}
+          testID="logout-dialog"
+        />
+      )}
     </View>
   );
   if (visible === ROUTES.register) {
@@ -154,13 +228,13 @@ export function AppNavigator({ services }: { services: AppServices }) {
     );
   }
   if (visible === ROUTES.categories && session !== null) {
-    return (
+    return withTabs(
       <CategoriesScreen
         gateway={services.categories}
         onBack={backToHistory}
         onSessionExpired={expireSession}
         session={session}
-      />
+      />,
     );
   }
   if (visible === ROUTES.movementForm && session !== null) {
@@ -190,11 +264,11 @@ export function AppNavigator({ services }: { services: AppServices }) {
         key={JSON.stringify(historyFilters)}
         onEdit={id => {
           setEditingId(id);
-          setRoute(ROUTES.movementForm);
+          go(ROUTES.movementForm);
         }}
         onNavigate={next => {
           setHistoryFilters(null);
-          setRoute(next);
+          go(next);
         }}
         onSessionExpired={expireSession}
         session={session}
@@ -208,7 +282,7 @@ export function AppNavigator({ services }: { services: AppServices }) {
         onCancel={backToHistory}
         onContinue={data => {
           setPrefill(data);
-          setRoute(ROUTES.movementForm);
+          go(ROUTES.movementForm);
         }}
       />,
     );
@@ -217,7 +291,7 @@ export function AppNavigator({ services }: { services: AppServices }) {
     return withTabs(
       <AnalysisScreen
         gateway={services.movements}
-        onNewMovement={() => setRoute(ROUTES.movementForm)}
+        onNewMovement={() => go(ROUTES.movementForm)}
         onOpenHistory={openFilteredHistory}
         onSessionExpired={expireSession}
         session={session}

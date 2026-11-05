@@ -128,6 +128,14 @@ export const MOVEMENT_TEXTS = {
     partial:
       'No fue posible identificar toda la información. Complete los datos manualmente',
   },
+  navigation: {
+    back: '‹ Atrás',
+    forward: 'Adelante ›',
+    logout: 'Cerrar sesión',
+    logoutQuestion: '¿Deseas cerrar sesión?',
+    cancel: 'Cancelar',
+    confirm: 'Cerrar sesión',
+  },
   tabs: {
     movements: 'Movimientos',
     analysis: 'Análisis',

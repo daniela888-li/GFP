@@ -382,4 +382,32 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
       '$0,00',
     );
   });
+
+  test('E13-D2: Atrás and Adelante walk the visited screens', async () => {
+    await login();
+    expect(screen.getByTestId('nav-back').props.accessibilityState).toEqual(
+      expect.objectContaining({ disabled: true }),
+    );
+    await fireEvent.press(screen.getByTestId('tab-financialAnalysis'));
+    await screen.findByTestId('analysis-screen');
+    await fireEvent.press(screen.getByTestId('tab-recommendations'));
+    await screen.findByTestId('recommendations-screen');
+    await fireEvent.press(screen.getByTestId('nav-back'));
+    expect(await screen.findByTestId('analysis-screen')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('nav-back'));
+    expect(await screen.findByTestId('movement-history')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('nav-forward'));
+    expect(await screen.findByTestId('analysis-screen')).toBeTruthy();
+  });
+
+  test('E13-D3: Cerrar sesión asks, ends the session and protects the routes', async () => {
+    await login();
+    await fireEvent.press(screen.getByTestId('nav-logout'));
+    await fireEvent.press(await screen.findByTestId('logout-cancel'));
+    expect(screen.getByTestId('movement-history')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('nav-logout'));
+    await fireEvent.press(await screen.findByTestId('logout-confirm'));
+    expect(await screen.findByTestId('login-identifier')).toBeTruthy();
+    expect(screen.queryByTestId('top-bar')).toBeNull();
+  });
 });

@@ -24,7 +24,7 @@ criterio derivado figura en su columna «Origen».
 | HU6 Visualizar balance financiero | CA01–CA04 | 09 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU7 Capturar gasto mediante factura o comprobante | CA01–CA12 | 10 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU9 Consultar análisis financiero | CA01–CA06 | 11 | Propuesta implementada; pendiente de revisión y validación en emulador |
-| HU10 Consultar recomendaciones financieras automáticas | CA01–CA06 (CA02 con subcriterios a, b, c) | 12 | Pendiente |
+| HU10 Consultar recomendaciones financieras automáticas | CA01–CA06 (CA02 con subcriterios a, b, c) | 12 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | **Total** | **99** | | |
 
 ## Criterios parciales previstos
@@ -428,6 +428,22 @@ con SQLite). Decisiones en `decisiones-etapa-11.md`. Estado: propuesta sin valid
 | HU9-CA04 | Reactividad ante cambios: Todos los gráficos y totales de esta vista deben recalcularse automáticamente cuando el usuario cree (HU4), edite (HU4), elimine (HU5) o escanee (HU7) movimientos que correspondan al período consultado. | Lectura al abrir la pantalla |
 | HU9-CA05 | Formato monetario unificado: Todos los montos deben desplegarse con el estándar de moneda local y dos decimales (ej. $1,250.00). | U (E11-D4) |
 | HU9-CA06 | Manejo de estado sin datos: Si no existen registros en el período seleccionado, la vista ocultará los gráficos y mostrará el mensaje: "No hay suficientes movimientos registrados para generar el análisis financiero de este período". | C |
+
+## HU10 — criterios de aceptación (Etapa 12)
+
+Transcripción de los criterios de HU10. Verificación: U (unitaria), C (componente), I (integración
+con SQLite). Decisiones en `decisiones-etapa-12.md`. Estado: propuesta sin validación en emulador.
+
+| Criterio | Texto | Verificación |
+|---|---|---|
+| HU10-CA01 | Ejecución local y privada: El motor de reglas debe ejecutarse de manera 100% local en el dispositivo, procesando únicamente los movimientos registrados de la base de datos SQLite del usuario autenticado. | U, C |
+| HU10-CA02a | Regla 1 (Balance negativo): Si la suma de gastos supera la suma de ingresos en el mes actual. | U |
+| HU10-CA02b | Regla 2 (Categoría crítica): Si una sola categoría representa más del 50% del total de gastos del período. | U (E12-D1) |
+| HU10-CA02c | Regla 3 (Incremento inusual): Si los gastos de la categoría en el mes actual superan en más de un 30% a los del mes anterior. | U (E12-D1) |
+| HU10-CA03 | Estructura de la recomendación: Cada tarjeta debe incluir título y descripción, datos de origen e ícono de severidad. | U, C |
+| HU10-CA04 | Estado vacío (sin recomendaciones): Si el comportamiento financiero no activa ninguna regla, la vista debe mostrar el estado vacío con el mensaje: "¡Todo en orden! No hay recomendaciones o alertas por el momento.". | C |
+| HU10-CA05 | Navegación al detalle: Al hacer clic en "Ver movimientos asociados", el sistema redirige a la pantalla de Historial (HU5) aplicando automáticamente los filtros de la categoría y período que generaron la alerta. | C |
+| HU10-CA06 | Limitación de responsabilidad (Disclaimer): Toda recomendación o la vista debe incluir visiblemente la leyenda estática: "Las recomendaciones son generadas automáticamente con fines informativos basados en tus registros y no constituyen asesoramiento financiero profesional ni sobre productos de inversión o crédito.". | C |
 
 ## Etapa 01 — criterios de cierre (no son criterios de historias)
 

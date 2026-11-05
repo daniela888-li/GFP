@@ -240,7 +240,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
       Object.values(ROUTE_DEFINITIONS)
         .filter(route => route.implemented)
         .map(route => route.story),
-    ).toEqual(['HU1', 'HU2', 'HU3', 'HU4', 'HU5', 'HU7', 'HU8']);
+    ).toEqual(['HU1', 'HU2', 'HU3', 'HU4', 'HU5', 'HU7', 'HU8', 'HU9']);
   });
 });
 
@@ -318,7 +318,7 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
   test('the bottom bar opens Análisis and Recomendaciones', async () => {
     await login();
     await fireEvent.press(screen.getByTestId('tab-financialAnalysis'));
-    expect(await screen.findByTestId('provisional-HU9')).toBeTruthy();
+    expect(await screen.findByTestId('analysis-screen')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('tab-recommendations'));
     expect(await screen.findByTestId('provisional-HU10')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('tab-movementHistory'));

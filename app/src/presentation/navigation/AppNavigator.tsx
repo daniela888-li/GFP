@@ -3,6 +3,8 @@ import { BackHandler, View } from 'react-native';
 import type { AppServices } from '../../services/appServices';
 import type { UserSession } from '../../services/session/sessionManager';
 import { CategoriesScreen } from '../categories/CategoriesScreen';
+import type { MovementFilterInput } from '../../business/movements/movementRules';
+import { AnalysisScreen } from '../analysis/AnalysisScreen';
 import { BottomTabs } from '../components/BottomTabs';
 import { LoginScreen } from '../login/LoginScreen';
 import {
@@ -48,11 +50,14 @@ export function AppNavigator({ services }: { services: AppServices }) {
   );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [prefill, setPrefill] = useState<MovementPrefill | null>(null);
+  const [historyFilters, setHistoryFilters] =
+    useState<MovementFilterInput | null>(null);
   const visible = resolveRoute(route, session, services.sessions.current());
   const clearScreenData = useCallback(() => {
     setSavedMovement(null);
     setEditingId(null);
     setPrefill(null);
+    setHistoryFilters(null);
   }, []);
   const expireSession = useCallback(() => {
     clearScreenData();
@@ -63,6 +68,10 @@ export function AppNavigator({ services }: { services: AppServices }) {
     clearScreenData();
     setRoute(ROUTES.movementHistory);
   }, [clearScreenData]);
+  const openFilteredHistory = useCallback((filters: MovementFilterInput) => {
+    setHistoryFilters(filters);
+    setRoute(ROUTES.movementHistory);
+  }, []);
   // Análisis y Recomendaciones vuelven al historial con el botón Atrás de Android. En el
   // historial, Atrás conserva el comportamiento del sistema y no regresa al inicio de sesión.
   useEffect(() => {
@@ -176,11 +185,16 @@ export function AppNavigator({ services }: { services: AppServices }) {
       <MovementHistoryScreen
         categories={services.categories}
         gateway={services.movements}
+        initialFilters={historyFilters ?? undefined}
+        key={JSON.stringify(historyFilters)}
         onEdit={id => {
           setEditingId(id);
           setRoute(ROUTES.movementForm);
         }}
-        onNavigate={setRoute}
+        onNavigate={next => {
+          setHistoryFilters(null);
+          setRoute(next);
+        }}
         onSessionExpired={expireSession}
         session={session}
       />,
@@ -195,6 +209,17 @@ export function AppNavigator({ services }: { services: AppServices }) {
           setPrefill(data);
           setRoute(ROUTES.movementForm);
         }}
+      />,
+    );
+  }
+  if (visible === ROUTES.financialAnalysis && session !== null) {
+    return withTabs(
+      <AnalysisScreen
+        gateway={services.movements}
+        onNewMovement={() => setRoute(ROUTES.movementForm)}
+        onOpenHistory={openFilteredHistory}
+        onSessionExpired={expireSession}
+        session={session}
       />,
     );
   }

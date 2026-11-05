@@ -19,7 +19,7 @@ criterio derivado figura en su columna «Origen».
 | HU2 Iniciar sesión | CA01–CA11 | 04 | Implementada (2026-10-28) con la corrección de memoria de PBKDF2; CA01–CA08 verificados en Jest y en Android 10 y 14 (`2e5fd6c`, 2026-10-29); CA09–CA11 parciales; integrada en `main` (`96d00cb`, `611a7ef`) el 2026-10-30; cierre aprobado con reservas (`cierre-etapa-04.md`, E04-APROBACION) |
 | HU3 Recuperar contraseña | CA01–CA13 | 05 | Implementada en la rama `e05/hu3-recuperar-contrasena` (2026-10-30), sin integrar en `main`; CA01–CA13 verificados en Jest; pruebas manuales en Android 10 y 14 culminadas el 2026-11-04: CA01–CA05 y CA07–CA13 verificados con excepciones aceptadas, CA06 sin verificación en dispositivo (R16 no verificable); E05-D1 a E05-D9 ratificadas y cierre documental preparado el 2026-11-04 (`cierre-etapa-05.md`); integración en `main` pendiente de autorización |
 | HU8 Administrar categorías de movimientos financieros | CA01–CA08 (CA07 con subcriterios a, b, c) | 06 | Implementada en la rama `e06/hu8-administrar-categorias` (2026-11-04), sin integrar en `main`; CA01–CA06, CA07a y CA07b verificados en Jest; CA07c y CA08 parciales previstos (E07 y E08); validación en emulador pendiente |
-| HU4 Registrar y editar movimiento financiero | CA01–CA13 | 07 | Pendiente |
+| HU4 Registrar y editar movimiento financiero | CA01–CA13 | 07 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU5 Consultar historia de movimientos financieros | CA01–CA07 | 08 | Pendiente |
 | HU6 Visualizar balance financiero | CA01–CA04 | 09 | Pendiente |
 | HU7 Capturar gasto mediante factura o comprobante | CA01–CA12 | 10 | Pendiente |
@@ -345,6 +345,28 @@ Decisiones verificadas además en Jest: E06-D4 (acceso desde la pantalla provisi
 Atrás, `App.test.tsx` y `CategoriesScreen.test.tsx`), E06-D5 (12 íconos en el selector), E06-D6b
 («Guardar»), E06-D6c y E06-D9b (40 puntos de código). HU2-CA10: la ruta `categories` exige sesión
 (`App.test.tsx`).
+
+## HU4 — criterios de aceptación (Etapa 07)
+
+Transcripción de los criterios de HU4, en el orden del documento fuente. Verificación: U
+(unitaria), C (componente), I (integración con SQLite). Decisiones en `decisiones-etapa-07.md`.
+Estado: propuesta en la rama `e07/hu4-movimientos`, sin validación en emulador.
+
+| Criterio | Texto | Verificación |
+|---|---|---|
+| HU4-CA01 | Los campos Tipo de movimiento, Categoría, Fecha y Monto deben ser obligatorios. | U, `movementRules.test.ts` |
+| HU4-CA02 | El selector "Categoría" debe poblarse con los registros activos del maestro 'categories'. | I, `movementManagement.test.ts` |
+| HU4-CA03 | El selector "Fecha" debe inicializarse con la fecha actual del sistema por defecto. | C, `MovementFormScreen.test.tsx` |
+| HU4-CA04 | La fecha no puede ser posterior a la fecha actual del sistema. De lo contrario, se muestra un mensaje: "La fecha no puede ser futura". | U, C |
+| HU4-CA05 | El campo monto debe recibir solo valores numéricos positivos mayores a cero. De lo contrario, se muestra un mensaje cerca del campo: "Ingrese un monto válido". | U, C |
+| HU4-CA06 | El campo "Descripción" es opcional y permite una longitud máxima de 250 caracteres. | U |
+| HU4-CA07 | Al presionar el botón "Registrar" (o "Actualizar"), si la información es válida, la transacción se almacena en la base de datos local vinculada al userId del usuario autenticado. | I (E07-D2) |
+| HU4-CA08 | Al guardar correctamente, el sistema muestra el mensaje de confirmación: "El movimiento fue registrado exitosamente" (o "El movimiento fue actualizado exitosamente" para ediciones). | C, `App.test.tsx` |
+| HU4-CA09 | Al completar el registro exitoso, se limpian los campos del formulario. | C, `App.test.tsx` (E07-D4) |
+| HU4-CA10 | Al presionar el botón "Editar" en un movimiento existente, la vista carga previamente todos los datos registrados para su modificación. | C; punto de entrada en E08 |
+| HU4-CA11 | El botón "Limpiar" borra el contenido de todos los campos del formulario. | C |
+| HU4-CA12 | El botón "Cancelar" descarta los cambios y redirige a la vista principal o al historial. | C (E07-D3) |
+| HU4-CA13 | Si los datos ingresados son inválidos o incompletos al intentar guardar, se debe mostrar un error con el mensaje: "Error en los campos ingresados". | C |
 
 ## Etapa 01 — criterios de cierre (no son criterios de historias)
 

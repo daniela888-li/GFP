@@ -23,7 +23,7 @@ criterio derivado figura en su columna «Origen».
 | HU5 Consultar historia de movimientos financieros | CA01–CA07 | 08 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU6 Visualizar balance financiero | CA01–CA04 | 09 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU7 Capturar gasto mediante factura o comprobante | CA01–CA12 | 10 | Propuesta implementada; pendiente de revisión y validación en emulador |
-| HU9 Consultar análisis financiero | CA01–CA06 | 11 | Pendiente |
+| HU9 Consultar análisis financiero | CA01–CA06 | 11 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU10 Consultar recomendaciones financieras automáticas | CA01–CA06 (CA02 con subcriterios a, b, c) | 12 | Pendiente |
 | **Total** | **99** | | |
 
@@ -414,6 +414,20 @@ con SQLite). Decisiones en `decisiones-etapa-10.md`. Estado: propuesta sin valid
 | HU7-CA10 | El usuario puede modificar o corregir cualquier campo precargado en la vista del formulario (HU4) antes de presionar el botón "Registrar". | C (E07-D2) |
 | HU7-CA11 | Al presionar “Reintentar”, la vista restablece el estado inicial, permitiendo capturar o subir una nueva imagen. | C |
 | HU7-CA12 | Al presionar “Cancelar”, se aborta el flujo y se regresa a la pantalla de historial (HU5). | C |
+
+## HU9 — criterios de aceptación (Etapa 11)
+
+Transcripción de los criterios de HU9. Verificación: U (unitaria), C (componente), I (integración
+con SQLite). Decisiones en `decisiones-etapa-11.md`. Estado: propuesta sin validación en emulador.
+
+| Criterio | Texto | Verificación |
+|---|---|---|
+| HU9-CA01 | Cálculo dinámico de KPIs: Las tarjetas informativas de la cabecera deben calcular en tiempo real: Total Ingresos = sum(Ingresos del período); Total Gastos = sum(Gastos del período); Balance = Total Ingresos - Total Gastos. | U, C |
+| HU9-CA02 | Gráfico de Distribución por Categoría: Debe representar visualmente el porcentaje correspondiente a cada categoría sobre el total de gastos del período. Al interactuar con un segmento, se despliega el monto total de esa categoría. | U, C |
+| HU9-CA03 | Gráfico de Evolución Temporal: Debe mostrar la relación o tendencia entre Ingresos y Gastos agrupados por mes o semana según el rango seleccionado. | U, C |
+| HU9-CA04 | Reactividad ante cambios: Todos los gráficos y totales de esta vista deben recalcularse automáticamente cuando el usuario cree (HU4), edite (HU4), elimine (HU5) o escanee (HU7) movimientos que correspondan al período consultado. | Lectura al abrir la pantalla |
+| HU9-CA05 | Formato monetario unificado: Todos los montos deben desplegarse con el estándar de moneda local y dos decimales (ej. $1,250.00). | U (E11-D4) |
+| HU9-CA06 | Manejo de estado sin datos: Si no existen registros en el período seleccionado, la vista ocultará los gráficos y mostrará el mensaje: "No hay suficientes movimientos registrados para generar el análisis financiero de este período". | C |
 
 ## Etapa 01 — criterios de cierre (no son criterios de historias)
 

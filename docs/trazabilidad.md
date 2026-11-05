@@ -20,7 +20,7 @@ criterio derivado figura en su columna «Origen».
 | HU3 Recuperar contraseña | CA01–CA13 | 05 | Implementada en la rama `e05/hu3-recuperar-contrasena` (2026-10-30), sin integrar en `main`; CA01–CA13 verificados en Jest; pruebas manuales en Android 10 y 14 culminadas el 2026-11-04: CA01–CA05 y CA07–CA13 verificados con excepciones aceptadas, CA06 sin verificación en dispositivo (R16 no verificable); E05-D1 a E05-D9 ratificadas y cierre documental preparado el 2026-11-04 (`cierre-etapa-05.md`); integración en `main` pendiente de autorización |
 | HU8 Administrar categorías de movimientos financieros | CA01–CA08 (CA07 con subcriterios a, b, c) | 06 | Implementada en la rama `e06/hu8-administrar-categorias` (2026-11-04), sin integrar en `main`; CA01–CA06, CA07a y CA07b verificados en Jest; CA07c y CA08 parciales previstos (E07 y E08); validación en emulador pendiente |
 | HU4 Registrar y editar movimiento financiero | CA01–CA13 | 07 | Propuesta implementada; pendiente de revisión y validación en emulador |
-| HU5 Consultar historia de movimientos financieros | CA01–CA07 | 08 | Pendiente |
+| HU5 Consultar historia de movimientos financieros | CA01–CA07 | 08 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU6 Visualizar balance financiero | CA01–CA04 | 09 | Pendiente |
 | HU7 Capturar gasto mediante factura o comprobante | CA01–CA12 | 10 | Pendiente |
 | HU9 Consultar análisis financiero | CA01–CA06 | 11 | Pendiente |
@@ -367,6 +367,21 @@ Estado: propuesta en la rama `e07/hu4-movimientos`, sin validación en emulador.
 | HU4-CA11 | El botón "Limpiar" borra el contenido de todos los campos del formulario. | C |
 | HU4-CA12 | El botón "Cancelar" descarta los cambios y redirige a la vista principal o al historial. | C (E07-D3) |
 | HU4-CA13 | Si los datos ingresados son inválidos o incompletos al intentar guardar, se debe mostrar un error con el mensaje: "Error en los campos ingresados". | C |
+
+## HU5 — criterios de aceptación (Etapa 08)
+
+Transcripción de los criterios de HU5. Decisiones en `decisiones-etapa-08.md`. Estado: propuesta
+sin validación en emulador.
+
+| Criterio | Texto | Verificación |
+|---|---|---|
+| HU5-CA01 | La vista debe desplegar la lista de transacciones registradas del usuario autenticado, ordenadas cronológicamente desde la más reciente a la más antigua. | C, `MovementHistoryScreen.test.tsx`; I, `movementManagement.test.ts` |
+| HU5-CA02 | Las opciones del filtro "Categoría" deben poblarse con el maestro 'categories'. | C |
+| HU5-CA03 | Al presionar "Filtrar", la lista debe refrescarse mostrando únicamente los movimientos que cumplan simultáneamente con los criterios aplicados. | C, I |
+| HU5-CA04 | Si no existen registros coincidentes, la aplicación debe mostrar el contenedor de estado vacío con el título: "No se encontraron movimientos" con el subtítulo "Intenta cambiar los filtros seleccionados o realiza otra búsqueda". | C |
+| HU5-CA05 | Al hacer clic en "Eliminar", se despliega un modal flotante emergente con los botones "Cancelar" y "Confirmar" y con la pregunta: "¿Está seguro de eliminar este movimiento?" con el texto aclaratorio "Esta acción es irreversible y afectará su balance.". | C |
+| HU5-CA06 | Al presionar "Confirmar" en el modal, el registro se elimina de la base de datos local y la lista se actualiza automáticamente mostrando el mensaje: "Movimiento eliminado correctamente". | C, I |
+| HU5-CA07 | Al hacer clic en "Editar", el sistema redirige al formulario (HU4) cargando los datos del movimiento seleccionado. | C, `App.test.tsx` |
 
 ## Etapa 01 — criterios de cierre (no son criterios de historias)
 

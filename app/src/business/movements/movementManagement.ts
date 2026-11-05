@@ -9,6 +9,7 @@ import {
 import {
   MovementRepository,
   type Movement,
+  type MovementListItem,
 } from '../../infrastructure/database/repositories/movementRepository';
 import type {
   SqlDatabase,
@@ -27,10 +28,15 @@ import {
 } from '../../services/session/sessionManager';
 import {
   categoryFitsType,
+  isMovementType,
   isoDateFrom,
+  parseDisplayDate,
   toValidMovementInput,
+  validateMovementFilters,
   validateMovementInput,
   type MovementFieldErrors,
+  type MovementFilterError,
+  type MovementFilterInput,
   type MovementInput,
 } from './movementRules';
 
@@ -55,6 +61,18 @@ export type MovementSaveResult =
   | { status: 'session_expired' }
   | { status: 'failed' };
 
+export type MovementListResult =
+  | { status: 'ok'; movements: MovementListItem[] }
+  | { status: 'invalid_filters'; error: MovementFilterError }
+  | { status: 'session_expired' }
+  | { status: 'failed' };
+
+export type MovementDeleteResult =
+  | { status: 'deleted' }
+  | { status: 'not_found' }
+  | { status: 'session_expired' }
+  | { status: 'failed' };
+
 export interface MovementGateway {
   // Categorías del selector (HU4-CA02, HU8-CA08, E07-D1). `includeId` conserva la categoría
   // actual de un movimiento en edición aunque ya no corresponda a su tipo.
@@ -64,6 +82,11 @@ export interface MovementGateway {
     includeId?: string,
   ): Promise<MovementCategoriesResult>;
   find(session: UserSession, id: string): Promise<MovementFindResult>;
+  list(
+    session: UserSession,
+    filters: MovementFilterInput,
+  ): Promise<MovementListResult>;
+  remove(session: UserSession, id: string): Promise<MovementDeleteResult>;
   create(
     session: UserSession,
     input: MovementInput,
@@ -140,6 +163,42 @@ export class MovementManagementService implements MovementGateway {
         : { status: 'ok', movement };
     } catch (error) {
       return { status: failureStatus(error) };
+    }
+  }
+
+  async list(
+    session: UserSession,
+    filters: MovementFilterInput,
+  ): Promise<MovementListResult> {
+    const error = validateMovementFilters(filters);
+    if (error !== null) {
+      return { status: 'invalid_filters', error };
+    }
+    try {
+      const movements = await this.movements().listOwn(session, {
+        from: parseDisplayDate(filters.from),
+        to: parseDisplayDate(filters.to),
+        type: isMovementType(filters.type) ? filters.type : null,
+        categoryId: filters.categoryId.length > 0 ? filters.categoryId : null,
+      });
+      return { status: 'ok', movements };
+    } catch (failure) {
+      return { status: failureStatus(failure) };
+    }
+  }
+
+  async remove(
+    session: UserSession,
+    id: string,
+  ): Promise<MovementDeleteResult> {
+    try {
+      const deleted = await serializedByDatabase(
+        this.dependencies.database,
+        () => this.movements().deleteOwn(session, id),
+      );
+      return { status: deleted ? 'deleted' : 'not_found' };
+    } catch (failure) {
+      return { status: failureStatus(failure) };
     }
   }
 

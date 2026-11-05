@@ -1,15 +1,15 @@
-import { useCallback, useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { BackHandler, View } from 'react-native';
 import type { AppServices } from '../../services/appServices';
 import type { UserSession } from '../../services/session/sessionManager';
 import { CategoriesScreen } from '../categories/CategoriesScreen';
-import { CATEGORY_TEXTS } from '../categories/categoryTexts';
 import { BottomTabs } from '../components/BottomTabs';
 import { LoginScreen } from '../login/LoginScreen';
 import {
   MovementFormScreen,
   type MovementSummary,
 } from '../movements/MovementFormScreen';
+import { MovementHistoryScreen } from '../movements/MovementHistoryScreen';
 import { MovementSuccessScreen } from '../movements/MovementSuccessScreen';
 import { MOVEMENT_TEXTS } from '../movements/movementTexts';
 import { PasswordRecoveryScreen } from '../recovery/PasswordRecoveryScreen';
@@ -44,6 +44,7 @@ export function AppNavigator({ services }: { services: AppServices }) {
   const [savedMovement, setSavedMovement] = useState<MovementSummary | null>(
     null,
   );
+  const [editingId, setEditingId] = useState<string | null>(null);
   const visible = resolveRoute(route, session, services.sessions.current());
   const expireSession = useCallback(() => {
     setSession(null);
@@ -51,10 +52,27 @@ export function AppNavigator({ services }: { services: AppServices }) {
   }, []);
   const backToHistory = useCallback(() => {
     setSavedMovement(null);
+    setEditingId(null);
     setRoute(ROUTES.movementHistory);
   }, []);
+  // Las pantallas provisionales vuelven al historial con el botón Atrás de Android. En el
+  // historial, Atrás conserva el comportamiento del sistema y no regresa al inicio de sesión.
+  useEffect(() => {
+    if (ROUTE_DEFINITIONS[visible].implemented) {
+      return undefined;
+    }
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        backToHistory();
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [visible, backToHistory]);
   const openTab = (tab: RouteName) => {
     setSavedMovement(null);
+    setEditingId(null);
     setRoute(tab);
   };
   const withTabs = (content: ReactNode) => (
@@ -132,6 +150,8 @@ export function AppNavigator({ services }: { services: AppServices }) {
       ) : (
         <MovementFormScreen
           gateway={services.movements}
+          key={editingId ?? 'new'}
+          movementId={editingId ?? undefined}
           onCancel={backToHistory}
           onCreated={setSavedMovement}
           onSessionExpired={expireSession}
@@ -140,24 +160,20 @@ export function AppNavigator({ services }: { services: AppServices }) {
       ),
     );
   }
-  // Accesos a «Nuevo movimiento» (E07-D3) y «Categorías» (E06-D4) desde el historial; en la
-  // Etapa 08 pasan a la pantalla real del historial.
-  const actions =
-    visible === ROUTES.movementHistory
-      ? [
-          {
-            label: MOVEMENT_TEXTS.tabs.newMovement,
-            onPress: () => setRoute(ROUTES.movementForm),
-            testID: 'open-movement-form',
-          },
-          {
-            label: CATEGORY_TEXTS.buttons.openCategories,
-            onPress: () => setRoute(ROUTES.categories),
-            testID: 'open-categories',
-          },
-        ]
-      : [];
-  return withTabs(
-    <ProvisionalScreen actions={actions} route={ROUTE_DEFINITIONS[visible]} />,
-  );
+  if (visible === ROUTES.movementHistory && session !== null) {
+    return withTabs(
+      <MovementHistoryScreen
+        categories={services.categories}
+        gateway={services.movements}
+        onEdit={id => {
+          setEditingId(id);
+          setRoute(ROUTES.movementForm);
+        }}
+        onNavigate={setRoute}
+        onSessionExpired={expireSession}
+        session={session}
+      />,
+    );
+  }
+  return withTabs(<ProvisionalScreen route={ROUTE_DEFINITIONS[visible]} />);
 }

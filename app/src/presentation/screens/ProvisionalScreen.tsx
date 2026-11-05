@@ -10,7 +10,7 @@ export type ProvisionalAction = {
 };
 
 // `actions` permite que una pantalla provisional ofrezca accesos a historias ya
-// implementadas; hoy, el botón «Categorías» del historial (E06-D4).
+// implementadas.
 export function ProvisionalScreen({
   route,
   actions = [],

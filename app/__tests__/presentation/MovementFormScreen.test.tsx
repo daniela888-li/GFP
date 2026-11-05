@@ -141,12 +141,14 @@ describe('HU4 form', () => {
     await setup();
     await fireEvent.press(screen.getByTestId('movement-date-open'));
     expect(
-      screen.getByTestId('movement-calendar-day-2026-11-05').props
+      screen.getByTestId('movement-date-calendar-day-2026-11-05').props
         .accessibilityState,
     ).toMatchObject({ disabled: true });
-    await fireEvent.press(screen.getByTestId('movement-calendar-previous'));
     await fireEvent.press(
-      screen.getByTestId('movement-calendar-day-2026-10-25'),
+      screen.getByTestId('movement-date-calendar-previous'),
+    );
+    await fireEvent.press(
+      screen.getByTestId('movement-date-calendar-day-2026-10-25'),
     );
     expect(screen.getByTestId('movement-date').props.value).toBe('25/10/2026');
   });

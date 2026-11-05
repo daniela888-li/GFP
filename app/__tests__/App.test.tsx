@@ -163,7 +163,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
       'Nueva clave 9#',
     );
     await fireEvent.press(screen.getByTestId('login-submit'));
-    expect(await screen.findByTestId('provisional-HU5')).toBeTruthy();
+    expect(await screen.findByTestId('movement-history')).toBeTruthy();
   });
 
   test('HU2-CA07, CA10: a valid login opens the authenticated home route', async () => {
@@ -177,7 +177,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
       'Clave123!',
     );
     await fireEvent.press(screen.getByTestId('login-submit'));
-    expect(await screen.findByTestId('provisional-HU5')).toBeTruthy();
+    expect(await screen.findByTestId('movement-history')).toBeTruthy();
     expect(screen.queryByTestId('login-screen')).toBeNull();
   });
 
@@ -209,7 +209,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
     );
   });
 
-  test('the route registry declares HU1 to HU10 and HU1, HU2, HU3, HU4 and HU8 are implemented', () => {
+  test('the route registry declares HU1 to HU10 and HU1, HU2, HU3, HU4, HU5 and HU8 are implemented', () => {
     const stories = Object.values(ROUTE_DEFINITIONS).map(route => route.story);
     expect(stories).toEqual([
       'HU1',
@@ -226,7 +226,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
       Object.values(ROUTE_DEFINITIONS)
         .filter(route => route.implemented)
         .map(route => route.story),
-    ).toEqual(['HU1', 'HU2', 'HU3', 'HU4', 'HU8']);
+    ).toEqual(['HU1', 'HU2', 'HU3', 'HU4', 'HU5', 'HU8']);
   });
 });
 
@@ -256,7 +256,7 @@ describe('HU8 access from the history (E06-D4)', () => {
     await act(async () => {
       listeners.at(-1)!({ type: 'hardwareBackPress', timeStamp: 0 });
     });
-    expect(screen.getByTestId('provisional-HU5')).toBeTruthy();
+    expect(screen.getByTestId('movement-history')).toBeTruthy();
     spy.mockRestore();
   });
 });
@@ -273,7 +273,7 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
       'Clave123!',
     );
     await fireEvent.press(screen.getByTestId('login-submit'));
-    await screen.findByTestId('provisional-HU5');
+    await screen.findByTestId('movement-history');
   }
 
   test('saves a movement, confirms it and returns to the history', async () => {
@@ -296,7 +296,7 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
       '-$45.000',
     );
     await fireEvent.press(screen.getByTestId('movement-back-to-history'));
-    expect(await screen.findByTestId('provisional-HU5')).toBeTruthy();
+    expect(await screen.findByTestId('movement-history')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('open-movement-form'));
     expect((await screen.findByTestId('movement-amount')).props.value).toBe('');
   });
@@ -308,6 +308,47 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
     await fireEvent.press(screen.getByTestId('tab-recommendations'));
     expect(await screen.findByTestId('provisional-HU10')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('tab-movementHistory'));
-    expect(await screen.findByTestId('provisional-HU5')).toBeTruthy();
+    expect(await screen.findByTestId('movement-history')).toBeTruthy();
+  });
+
+  test('HU5-CA07 and HU4-CA10: Editar opens the form with the data and Cancelar returns', async () => {
+    await login();
+    await fireEvent.press(screen.getByTestId('open-movement-form'));
+    await fireEvent.changeText(
+      await screen.findByTestId('movement-amount'),
+      '700',
+    );
+    await fireEvent.press(screen.getByTestId('movement-category'));
+    await fireEvent.press(
+      await screen.findByTestId('movement-category-option-food'),
+    );
+    await fireEvent.press(screen.getByTestId('movement-save'));
+    await fireEvent.press(
+      await screen.findByTestId('movement-back-to-history'),
+    );
+    await fireEvent.press(await screen.findByText('✏️ Editar'));
+    expect(await screen.findByText('Editar movimiento')).toBeTruthy();
+    expect(screen.getByTestId('movement-amount').props.value).toBe('700');
+    await fireEvent.press(screen.getByTestId('movement-cancel'));
+    expect(await screen.findByTestId('movement-history')).toBeTruthy();
+  });
+
+  test('the Android back button returns from a provisional screen to the history', async () => {
+    const listeners: Array<Parameters<typeof BackHandler.addEventListener>[1]> =
+      [];
+    const spy = jest
+      .spyOn(BackHandler, 'addEventListener')
+      .mockImplementation((_event, handler) => {
+        listeners.push(handler);
+        return { remove: jest.fn() };
+      });
+    await login();
+    await fireEvent.press(screen.getByTestId('tab-recommendations'));
+    await screen.findByTestId('provisional-HU10');
+    await act(async () => {
+      listeners.at(-1)!({ type: 'hardwareBackPress', timeStamp: 0 });
+    });
+    expect(await screen.findByTestId('movement-history')).toBeTruthy();
+    spy.mockRestore();
   });
 });

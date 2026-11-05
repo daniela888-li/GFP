@@ -286,3 +286,54 @@ describe('HU8-CA07c reassignment to Otros', () => {
     expect(result.status).toBe('saved');
   });
 });
+
+describe('HU5 list and delete', () => {
+  const NO_FILTERS = { from: '', to: '', type: '', categoryId: '' };
+
+  test('HU2-CA11: lists only the movements of the session owner', async () => {
+    const context = await setup();
+    await saved(context);
+    const otherId = await createAccount(
+      context.database,
+      profile({
+        documentNumber: '99887766',
+        email: 'otro@example.com',
+        phoneNumber: '3009998877',
+      }),
+    );
+    const otherSession = context.sessions.start(otherId);
+    await expect(
+      context.movements.list(otherSession, NO_FILTERS),
+    ).resolves.toEqual({ status: 'ok', movements: [] });
+  });
+
+  test('the date range includes both ends', async () => {
+    const context = await setup();
+    const movement = await saved(context, { ...INPUT, date: '02/11/2026' });
+    const result = await context.movements.list(context.session, {
+      ...NO_FILTERS,
+      from: '02/11/2026',
+      to: '02/11/2026',
+    });
+    expect(result).toMatchObject({
+      status: 'ok',
+      movements: [{ id: movement.id, categoryName: 'Alimentación' }],
+    });
+  });
+
+  test('deleting a movement of another user changes nothing', async () => {
+    const context = await setup();
+    const movement = await saved(context);
+    const otherId = await createAccount(
+      context.database,
+      profile({
+        documentNumber: '99887766',
+        email: 'otro@example.com',
+        phoneNumber: '3009998877',
+      }),
+    );
+    await expect(
+      context.movements.remove(context.sessions.start(otherId), movement.id),
+    ).resolves.toEqual({ status: 'not_found' });
+  });
+});

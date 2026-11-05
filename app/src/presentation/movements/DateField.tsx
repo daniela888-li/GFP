@@ -17,6 +17,8 @@ type DateFieldProps = {
   onChange: (value: string) => void;
   error: string | null;
   disabled?: boolean;
+  label?: string;
+  testID?: string;
 };
 
 function pad(value: number): string {
@@ -31,6 +33,8 @@ export function DateField({
   onChange,
   error,
   disabled = false,
+  label = TEXTS.labels.date,
+  testID = 'movement-date',
 }: DateFieldProps) {
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(0);
@@ -66,11 +70,11 @@ export function DateField({
         editable={!disabled}
         error={error}
         keyboardType="numbers-and-punctuation"
-        label={TEXTS.labels.date}
+        label={label}
         maxLength={10}
         onChangeText={onChange}
         placeholder={TEXTS.placeholders.date}
-        testID="movement-date"
+        testID={testID}
         value={value}
       />
       <View style={styles.calendarButton}>
@@ -78,7 +82,7 @@ export function DateField({
           disabled={disabled}
           label={TEXTS.buttons.calendar}
           onPress={openCalendar}
-          testID="movement-date-open"
+          testID={`${testID}-open`}
         />
       </View>
       <Modal
@@ -88,14 +92,14 @@ export function DateField({
         visible={open}
       >
         <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.sheet} testID="movement-calendar">
+          <Pressable style={styles.sheet} testID={`${testID}-calendar`}>
             <View style={styles.header}>
               <Pressable
                 accessibilityLabel={TEXTS.calendar.previous}
                 accessibilityRole="button"
                 onPress={() => changeMonth(-1)}
                 style={styles.arrow}
-                testID="movement-calendar-previous"
+                testID={`${testID}-calendar-previous`}
               >
                 <Text style={styles.arrowText}>‹</Text>
               </Pressable>
@@ -109,7 +113,7 @@ export function DateField({
                 disabled={atCurrentMonth}
                 onPress={() => changeMonth(1)}
                 style={styles.arrow}
-                testID="movement-calendar-next"
+                testID={`${testID}-calendar-next`}
               >
                 <Text
                   style={[styles.arrowText, atCurrentMonth && styles.disabled]}
@@ -141,7 +145,7 @@ export function DateField({
                       setOpen(false);
                     }}
                     style={styles.cell}
-                    testID={`movement-calendar-day-${iso}`}
+                    testID={`${testID}-calendar-day-${iso}`}
                   >
                     <Text style={[styles.day, future && styles.disabled]}>
                       {day}

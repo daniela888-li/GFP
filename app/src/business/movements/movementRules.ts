@@ -170,6 +170,49 @@ export function validateMovementInput(
   return errors;
 }
 
+// Filtros del historial tal como se escriben en la pantalla (HU5). Vacío = sin filtro.
+export type MovementFilterInput = {
+  from: string;
+  to: string;
+  type: string;
+  categoryId: string;
+};
+
+export type MovementFilterError =
+  | 'invalid_from'
+  | 'invalid_to'
+  | 'inverted_range';
+
+export function validateMovementFilters(
+  input: MovementFilterInput,
+): MovementFilterError | null {
+  const from = input.from.trim();
+  const to = input.to.trim();
+  const fromDate = parseDisplayDate(from);
+  const toDate = parseDisplayDate(to);
+  if (from.length > 0 && fromDate === null) {
+    return 'invalid_from';
+  }
+  if (to.length > 0 && toDate === null) {
+    return 'invalid_to';
+  }
+  return fromDate !== null && toDate !== null && fromDate > toDate
+    ? 'inverted_range'
+    : null;
+}
+
+// Fecha de una tarjeta del historial: «Hoy», «Ayer» o DD/MM/AAAA.
+export function relativeDateLabel(date: string, today: string): string {
+  if (date === today) {
+    return 'Hoy';
+  }
+  const [year, month, day] = today.split('-').map(Number);
+  const yesterday = new Date(Date.UTC(year, month - 1, day - 1))
+    .toISOString()
+    .slice(0, 10);
+  return date === yesterday ? 'Ayer' : displayDateFrom(date);
+}
+
 // Devuelve la entrada lista para guardar, o null si tiene errores.
 export function toValidMovementInput(
   input: MovementInput,

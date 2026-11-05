@@ -2,13 +2,14 @@ import type {
   SessionManager,
   UserSession,
 } from '../../../services/session/sessionManager';
-import type { CategoryType } from '../categoryCatalogs';
+import type { CategoryIconId, CategoryType } from '../categoryCatalogs';
 import {
   readInteger,
   readOptionalText,
   readText,
   type SqlExecutor,
   type SqlRow,
+  type SqlValue,
 } from '../sqlDatabase';
 import { OwnedRepository } from './ownedRepository';
 
@@ -30,6 +31,20 @@ export type MovementValues = {
   amountCents: number;
   date: string;
   description: string | null;
+};
+
+// Fila del historial (HU5): el movimiento con el nombre y el ícono de su categoría.
+export type MovementListItem = Movement & {
+  categoryName: string;
+  categoryIcon: CategoryIconId;
+};
+
+// Filtros de HU5. Las fechas son AAAA-MM-DD e incluyen ambos extremos; un filtro nulo no aplica.
+export type MovementFilters = {
+  from: string | null;
+  to: string | null;
+  type: CategoryType | null;
+  categoryId: string | null;
 };
 
 const COLUMNS =
@@ -62,6 +77,56 @@ export class MovementRepository extends OwnedRepository {
       [id, userId],
     );
     return result.rows.length === 0 ? null : toMovement(result.rows[0]);
+  }
+
+  // HU5-CA01 y CA03: del más reciente al más antiguo. Dentro del mismo día manda el orden de
+  // creación. Todos los filtros se cumplen a la vez.
+  async listOwn(
+    session: UserSession,
+    filters: MovementFilters,
+  ): Promise<MovementListItem[]> {
+    const userId = this.ownerOf(session);
+    const conditions = ['m.user_id = ?'];
+    const params: SqlValue[] = [userId];
+    if (filters.from !== null) {
+      conditions.push('m.movement_date >= ?');
+      params.push(filters.from);
+    }
+    if (filters.to !== null) {
+      conditions.push('m.movement_date <= ?');
+      params.push(filters.to);
+    }
+    if (filters.type !== null) {
+      conditions.push('m.type = ?');
+      params.push(filters.type);
+    }
+    if (filters.categoryId !== null) {
+      conditions.push('m.category_id = ?');
+      params.push(filters.categoryId);
+    }
+    const result = await this.executor.execute(
+      `SELECT m.id, m.category_id, m.type, m.amount_cents, m.movement_date, m.description,
+         m.created_at, m.updated_at, c.name AS category_name, c.icon AS category_icon
+        FROM movements m JOIN categories c ON c.id = m.category_id
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY m.movement_date DESC, m.created_at DESC, m.rowid DESC`,
+      params,
+    );
+    return result.rows.map(row => ({
+      ...toMovement(row),
+      categoryName: readText(row, 'category_name'),
+      categoryIcon: readText(row, 'category_icon') as CategoryIconId,
+    }));
+  }
+
+  // Borrado físico (E08-D1). Devuelve false si no existe o es de otro usuario.
+  async deleteOwn(session: UserSession, id: string): Promise<boolean> {
+    const userId = this.ownerOf(session);
+    const result = await this.executor.execute(
+      'DELETE FROM movements WHERE id = ? AND user_id = ?',
+      [id, userId],
+    );
+    return result.rowsAffected === 1;
   }
 
   async createOwn(

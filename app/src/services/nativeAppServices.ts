@@ -3,6 +3,7 @@ import { MovementManagementService } from '../business/movements/movementManagem
 import { openEncryptedDatabase } from '../infrastructure/database/encryptedDatabase';
 import { createNativeDatabaseDependencies } from '../infrastructure/database/nativeDatabaseDependencies';
 import { createNativePbkdf2Engine } from '../infrastructure/security/pbkdf2Engine';
+import { nativeReceiptGateway } from '../processing/nativeReceiptGateway';
 import type { AppServices } from './appServices';
 import { AccountLoginService } from './authentication/accountLogin';
 import { AccountRecoveryService } from './authentication/accountRecovery';
@@ -24,5 +25,6 @@ export async function createNativeAppServices(): Promise<AppServices> {
     sessions,
     categories: new CategoryManagementService({ database, sessions }),
     movements: new MovementManagementService({ database, sessions }),
+    receipts: nativeReceiptGateway,
   };
 }

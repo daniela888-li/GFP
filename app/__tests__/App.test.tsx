@@ -8,6 +8,7 @@ import {
   ROUTE_DEFINITIONS,
   type RouteName,
 } from '../src/presentation/navigation/routes';
+import type { ReceiptGateway } from '../src/processing/receiptGateway';
 import { MovementManagementService } from '../src/business/movements/movementManagement';
 import { CategoryManagementService } from '../src/business/categories/categoryManagement';
 import { AccountLoginService } from '../src/services/authentication/accountLogin';
@@ -59,8 +60,21 @@ async function readyServices(withAccount = false) {
       sessions,
       random: nodeRandomBytes,
     }),
+    receipts: FAKE_RECEIPTS,
   };
 }
+
+const FAKE_RECEIPTS: ReceiptGateway = {
+  takePhoto: async () => null,
+  pickFromGallery: async () => ({
+    uri: 'file:///factura.jpg',
+    fileName: 'factura.jpg',
+    mimeType: 'image/jpeg',
+    sizeBytes: 1000,
+  }),
+  recognizeText: async () =>
+    'Supermercado La Canasta\nFecha: 01/01/2026\nTOTAL 45.500',
+};
 
 describe('App startup and navigation (A-W9, G-07, HU2)', () => {
   test('opens the database at startup and starts in the HU2 login screen', async () => {
@@ -226,7 +240,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
       Object.values(ROUTE_DEFINITIONS)
         .filter(route => route.implemented)
         .map(route => route.story),
-    ).toEqual(['HU1', 'HU2', 'HU3', 'HU4', 'HU5', 'HU8']);
+    ).toEqual(['HU1', 'HU2', 'HU3', 'HU4', 'HU5', 'HU7', 'HU8']);
   });
 });
 
@@ -350,5 +364,22 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
     });
     expect(await screen.findByTestId('movement-history')).toBeTruthy();
     spy.mockRestore();
+  });
+
+  test('HU7: the OCR data reaches the form and nothing is saved until confirming', async () => {
+    await login();
+    await fireEvent.press(screen.getByTestId('open-receipt-capture'));
+    await fireEvent.press(await screen.findByTestId('receipt-pick-gallery'));
+    await fireEvent.press(await screen.findByTestId('receipt-continue'));
+    expect((await screen.findByTestId('movement-amount')).props.value).toBe(
+      '45500',
+    );
+    expect(screen.getByTestId('movement-description').props.value).toBe(
+      'Supermercado La Canasta',
+    );
+    await fireEvent.press(screen.getByTestId('movement-cancel'));
+    expect(await screen.findByTestId('balance-expense')).toHaveTextContent(
+      '$0,00',
+    );
   });
 });

@@ -7,12 +7,14 @@ import { BottomTabs } from '../components/BottomTabs';
 import { LoginScreen } from '../login/LoginScreen';
 import {
   MovementFormScreen,
+  type MovementPrefill,
   type MovementSummary,
 } from '../movements/MovementFormScreen';
 import { MovementHistoryScreen } from '../movements/MovementHistoryScreen';
 import { MovementSuccessScreen } from '../movements/MovementSuccessScreen';
 import { MOVEMENT_TEXTS } from '../movements/movementTexts';
 import { PasswordRecoveryScreen } from '../recovery/PasswordRecoveryScreen';
+import { ReceiptCaptureScreen } from '../receipts/ReceiptCaptureScreen';
 import { RegistrationWizard } from '../registration/RegistrationWizard';
 import { ProvisionalScreen } from '../screens/ProvisionalScreen';
 import {
@@ -45,20 +47,29 @@ export function AppNavigator({ services }: { services: AppServices }) {
     null,
   );
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [prefill, setPrefill] = useState<MovementPrefill | null>(null);
   const visible = resolveRoute(route, session, services.sessions.current());
-  const expireSession = useCallback(() => {
-    setSession(null);
-    setRoute(ROUTES.login);
-  }, []);
-  const backToHistory = useCallback(() => {
+  const clearScreenData = useCallback(() => {
     setSavedMovement(null);
     setEditingId(null);
-    setRoute(ROUTES.movementHistory);
+    setPrefill(null);
   }, []);
-  // Las pantallas provisionales vuelven al historial con el botón Atrás de Android. En el
+  const expireSession = useCallback(() => {
+    clearScreenData();
+    setSession(null);
+    setRoute(ROUTES.login);
+  }, [clearScreenData]);
+  const backToHistory = useCallback(() => {
+    clearScreenData();
+    setRoute(ROUTES.movementHistory);
+  }, [clearScreenData]);
+  // Análisis y Recomendaciones vuelven al historial con el botón Atrás de Android. En el
   // historial, Atrás conserva el comportamiento del sistema y no regresa al inicio de sesión.
   useEffect(() => {
-    if (ROUTE_DEFINITIONS[visible].implemented) {
+    if (
+      visible !== ROUTES.financialAnalysis &&
+      visible !== ROUTES.recommendations
+    ) {
       return undefined;
     }
     const subscription = BackHandler.addEventListener(
@@ -71,8 +82,7 @@ export function AppNavigator({ services }: { services: AppServices }) {
     return () => subscription.remove();
   }, [visible, backToHistory]);
   const openTab = (tab: RouteName) => {
-    setSavedMovement(null);
-    setEditingId(null);
+    clearScreenData();
     setRoute(tab);
   };
   const withTabs = (content: ReactNode) => (
@@ -137,7 +147,7 @@ export function AppNavigator({ services }: { services: AppServices }) {
     return (
       <CategoriesScreen
         gateway={services.categories}
-        onBack={() => setRoute(ROUTES.movementHistory)}
+        onBack={backToHistory}
         onSessionExpired={expireSession}
         session={session}
       />
@@ -153,6 +163,7 @@ export function AppNavigator({ services }: { services: AppServices }) {
           key={editingId ?? 'new'}
           movementId={editingId ?? undefined}
           onCancel={backToHistory}
+          prefill={prefill ?? undefined}
           onCreated={setSavedMovement}
           onSessionExpired={expireSession}
           session={session}
@@ -172,6 +183,18 @@ export function AppNavigator({ services }: { services: AppServices }) {
         onNavigate={setRoute}
         onSessionExpired={expireSession}
         session={session}
+      />,
+    );
+  }
+  if (visible === ROUTES.receiptCapture) {
+    return withTabs(
+      <ReceiptCaptureScreen
+        gateway={services.receipts}
+        onCancel={backToHistory}
+        onContinue={data => {
+          setPrefill(data);
+          setRoute(ROUTES.movementForm);
+        }}
       />,
     );
   }

@@ -44,10 +44,18 @@ type MovementFormScreenProps = {
   // Con `movementId` el formulario abre en modo edición (HU4-CA10); su punto de entrada es el
   // botón «Editar» del historial (HU5, Etapa 08).
   movementId?: string;
+  // Datos leídos de un comprobante (HU7). Tipo fijo en Gasto; lo no identificado va vacío.
+  prefill?: MovementPrefill;
   onCreated: (summary: MovementSummary) => void;
   onCancel: () => void;
   onSessionExpired: () => void;
   now?: () => number;
+};
+
+export type MovementPrefill = {
+  amount: string;
+  date: string;
+  description: string;
 };
 
 const DEFAULT_TYPE: CategoryType = 'expense';
@@ -86,6 +94,7 @@ export function MovementFormScreen({
   gateway,
   session,
   movementId,
+  prefill,
   onCreated,
   onCancel,
   onSessionExpired,
@@ -95,10 +104,12 @@ export function MovementFormScreen({
   const texts = editing ? TEXTS.edit : TEXTS.create;
   const [today] = useState(() => isoDateFrom(now()));
   const [type, setType] = useState<CategoryType>(DEFAULT_TYPE);
-  const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(() => displayDateFrom(today));
+  const [amount, setAmount] = useState(prefill?.amount ?? '');
+  const [date, setDate] = useState(
+    () => prefill?.date ?? displayDateFrom(today),
+  );
   const [categoryId, setCategoryId] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(prefill?.description ?? '');
   const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<MovementFieldErrors>({});
   const [showFormError, setShowFormError] = useState(false);
@@ -271,6 +282,16 @@ export function MovementFormScreen({
         </Text>
         <Text style={styles.subtitle}>{texts.subtitle}</Text>
 
+        {prefill !== undefined &&
+          (prefill.amount === '' ||
+            prefill.date === '' ||
+            prefill.description === '') && (
+            <View style={styles.formError}>
+              <Text style={styles.formErrorText} testID="movement-prefill-note">
+                {TEXTS.prefill.partial}
+              </Text>
+            </View>
+          )}
         <Text style={styles.label}>{TEXTS.labels.type}</Text>
         <View style={styles.types}>
           {CATEGORY_TYPES.slice()

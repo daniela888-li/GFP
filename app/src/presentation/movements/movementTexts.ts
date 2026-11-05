@@ -124,6 +124,10 @@ export const MOVEMENT_TEXTS = {
     expense: 'GASTOS',
     balance: 'BALANCE',
   },
+  prefill: {
+    partial:
+      'No fue posible identificar toda la información. Complete los datos manualmente',
+  },
   tabs: {
     movements: 'Movimientos',
     analysis: 'Análisis',

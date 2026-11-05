@@ -103,14 +103,14 @@ export function amountInputFrom(cents: number): string {
   return fraction === 0 ? String(whole) : `${whole},${pad(fraction)}`;
 }
 
-// Monto visible: $1.234,50. Sin decimales cuando son cero.
+// Monto visible con separador de miles y dos decimales: $1.234,50 (HU6-CA02, HU9).
 export function formatAmount(cents: number): string {
-  const whole = String(Math.floor(cents / 100)).replace(
+  const absolute = Math.abs(cents);
+  const whole = String(Math.floor(absolute / 100)).replace(
     /\B(?=(\d{3})+(?!\d))/g,
     '.',
   );
-  const fraction = cents % 100;
-  return `$${whole}${fraction === 0 ? '' : `,${pad(fraction)}`}`;
+  return `${cents < 0 ? '-' : ''}$${whole},${pad(absolute % 100)}`;
 }
 
 export function normalizeDescription(raw: string): string {

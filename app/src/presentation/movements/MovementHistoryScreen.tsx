@@ -19,6 +19,7 @@ import {
 import type { Category } from '../../infrastructure/database/repositories/categoryRepository';
 import type { MovementListItem } from '../../infrastructure/database/repositories/movementRepository';
 import type { UserSession } from '../../services/session/sessionManager';
+import type { MovementTotals } from '../../infrastructure/database/repositories/movementRepository';
 import { CategoryIcon } from '../categories/CategoryIcon';
 import { ActionButton } from '../components/ActionButton';
 import { FieldError } from '../components/FieldError';
@@ -26,6 +27,7 @@ import { MessageDialog } from '../components/MessageDialog';
 import { SelectField } from '../components/SelectField';
 import { COLORS } from '../components/theme';
 import { ROUTES, type RouteName } from '../navigation/routes';
+import { BalanceSummary } from './BalanceSummary';
 import { DateField } from './DateField';
 import { MOVEMENT_TEXTS } from './movementTexts';
 
@@ -42,6 +44,8 @@ type MovementHistoryScreenProps = {
   gateway: MovementGateway;
   categories: CategoryGateway;
   session: UserSession;
+  // Filtros con los que abre al llegar desde Análisis o Recomendaciones (HU9, HU10).
+  initialFilters?: MovementFilterInput;
   onEdit: (id: string) => void;
   onNavigate: (route: RouteName) => void;
   onSessionExpired: () => void;
@@ -61,19 +65,20 @@ function filterMessage(error: MovementFilterError | null): string | null {
   }
 }
 
-// Pantalla «Historial» de HU5: lista filtrable con editar y eliminar. El resumen de totales
-// del prototipo pertenece a HU6 (Etapa 09).
+// Pantalla «Historial» de HU5 con el resumen de HU6: lista filtrable, editar y eliminar.
 export function MovementHistoryScreen({
   gateway,
   categories,
   session,
+  initialFilters = EMPTY_FILTERS,
   onEdit,
   onNavigate,
   onSessionExpired,
   now = Date.now,
 }: MovementHistoryScreenProps) {
-  const [draft, setDraft] = useState(EMPTY_FILTERS);
-  const [applied, setApplied] = useState(EMPTY_FILTERS);
+  const [draft, setDraft] = useState(initialFilters);
+  const [applied, setApplied] = useState(initialFilters);
+  const [totals, setTotals] = useState<MovementTotals | null>(null);
   const [movements, setMovements] = useState<MovementListItem[] | null>(null);
   const [options, setOptions] = useState<Category[]>([]);
   const [filterError, setFilterError] = useState<MovementFilterError | null>(
@@ -119,14 +124,25 @@ export function MovementHistoryScreen({
     [gateway, session, onSessionExpired],
   );
 
+  // HU6-CA04: los totales se leen de la base cada vez que la lista cambia.
+  const loadTotals = useCallback(async () => {
+    const result = await gateway.totals(session);
+    if (mounted.current && result.status === 'ok') {
+      setTotals(result.totals);
+    }
+  }, [gateway, session]);
+
+  const startFilters = useRef(initialFilters);
+
   useEffect(() => {
-    load(EMPTY_FILTERS);
+    load(startFilters.current);
+    loadTotals();
     categories.listActiveCategories(session).then(result => {
       if (mounted.current && result.status === 'ok') {
         setOptions(result.categories);
       }
     });
-  }, [load, categories, session]);
+  }, [load, loadTotals, categories, session]);
 
   function updateDraft(change: Partial<MovementFilterInput>) {
     setDraft(current => ({ ...current, ...change }));
@@ -171,7 +187,7 @@ export function MovementHistoryScreen({
     } else {
       setDeleted(true);
     }
-    await load(applied);
+    await Promise.all([load(applied), loadTotals()]);
   }
 
   const hasFilters = Object.values(applied).some(value => value.length > 0);
@@ -186,6 +202,8 @@ export function MovementHistoryScreen({
           {TEXTS.title}
         </Text>
         <Text style={styles.subtitle}>{TEXTS.subtitle}</Text>
+
+        <BalanceSummary totals={totals} />
 
         <Text accessibilityRole="header" style={styles.section}>
           {TEXTS.filtersTitle}

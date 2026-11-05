@@ -119,6 +119,11 @@ export const MOVEMENT_TEXTS = {
     deleteFailed: 'No fue posible eliminar el movimiento. Intenta de nuevo',
     notFound: 'El movimiento ya no existe.',
   },
+  balance: {
+    income: 'INGRESOS',
+    expense: 'GASTOS',
+    balance: 'BALANCE',
+  },
   tabs: {
     movements: 'Movimientos',
     analysis: 'Análisis',

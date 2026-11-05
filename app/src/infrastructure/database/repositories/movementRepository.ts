@@ -47,6 +47,8 @@ export type MovementFilters = {
   categoryId: string | null;
 };
 
+export type MovementTotals = { incomeCents: number; expenseCents: number };
+
 const COLUMNS =
   'id, category_id, type, amount_cents, movement_date, description, created_at, updated_at';
 
@@ -117,6 +119,25 @@ export class MovementRepository extends OwnedRepository {
       categoryName: readText(row, 'category_name'),
       categoryIcon: readText(row, 'category_icon') as CategoryIconId,
     }));
+  }
+
+  // HU6-CA01: totales de todos los movimientos del usuario, sin los filtros del historial.
+  async totalsOwn(session: UserSession): Promise<MovementTotals> {
+    const userId = this.ownerOf(session);
+    const result = await this.executor.execute(
+      `SELECT type, sum(amount_cents) AS total FROM movements
+        WHERE user_id = ? GROUP BY type`,
+      [userId],
+    );
+    const totals = { incomeCents: 0, expenseCents: 0 };
+    for (const row of result.rows) {
+      if (readText(row, 'type') === 'income') {
+        totals.incomeCents = readInteger(row, 'total');
+      } else {
+        totals.expenseCents = readInteger(row, 'total');
+      }
+    }
+    return totals;
   }
 
   // Borrado físico (E08-D1). Devuelve false si no existe o es de otro usuario.

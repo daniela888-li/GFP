@@ -47,7 +47,8 @@ describe('HU4-CA05 amount', () => {
 
   test('formats and restores amounts without losing cents', () => {
     expect(formatAmount(123450)).toBe('$1.234,50');
-    expect(formatAmount(4500000)).toBe('$45.000');
+    expect(formatAmount(4500000)).toBe('$45.000,00');
+    expect(formatAmount(-125000000)).toBe('-$1.250.000,00');
     expect(amountInputFrom(4550)).toBe('45,50');
     expect(amountInputFrom(4500)).toBe('45');
     expect(parseAmountCents(amountInputFrom(1999))).toBe(1999);

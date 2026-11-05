@@ -86,7 +86,7 @@ describe('HU5 history', () => {
     ]);
     expect(
       screen.getByTestId(`movement-amount-${ids.salary}`),
-    ).toHaveTextContent('+$1.000');
+    ).toHaveTextContent('+$1.000,00');
     expect(screen.getByText('Hoy • Gasto')).toBeTruthy();
     expect(screen.getByText('Ayer • Ingreso')).toBeTruthy();
   });
@@ -171,6 +171,33 @@ describe('HU5 history', () => {
       [ids.old],
     );
     expect(rows.rows).toHaveLength(0);
+  });
+
+  test('HU6: shows the totals and recalculates them after deleting', async () => {
+    const { ids } = await setup();
+    expect(await screen.findByTestId('balance-income')).toHaveTextContent(
+      '$1.000,00',
+    );
+    expect(screen.getByTestId('balance-expense')).toHaveTextContent('$30,00');
+    expect(screen.getByTestId('balance-total')).toHaveTextContent('$970,00');
+    await fireEvent.press(screen.getByTestId(`movement-delete-${ids.salary}`));
+    await fireEvent.press(await screen.findByTestId('movement-delete-confirm'));
+    await screen.findByTestId('history-deleted');
+    expect(screen.getByTestId('balance-total')).toHaveTextContent('-$30,00');
+    expect(screen.getByTestId('balance-total').props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ color: '#B3261E' })]),
+    );
+  });
+
+  test('HU6-CA01: the totals ignore the history filters', async () => {
+    await setup();
+    await fireEvent.press(screen.getByTestId('history-type'));
+    await fireEvent.press(
+      await screen.findByTestId('history-type-option-income'),
+    );
+    await fireEvent.press(screen.getByTestId('history-filter'));
+    await screen.findByText('Detalle salary');
+    expect(screen.getByTestId('balance-expense')).toHaveTextContent('$30,00');
   });
 
   test('HU5-CA07: Editar sends the selected movement to the form', async () => {

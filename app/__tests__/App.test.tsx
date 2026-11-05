@@ -209,7 +209,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
     );
   });
 
-  test('the route registry declares HU1 to HU10 and HU1, HU2, HU3, HU4, HU5 and HU8 are implemented', () => {
+  test('the route registry declares HU1 to HU10 and all stories with a route are implemented', () => {
     const stories = Object.values(ROUTE_DEFINITIONS).map(route => route.story);
     expect(stories).toEqual([
       'HU1',
@@ -293,7 +293,7 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
       screen.getByText('El movimiento fue registrado exitosamente'),
     ).toBeTruthy();
     expect(screen.getByTestId('movement-success-amount')).toHaveTextContent(
-      '-$45.000',
+      '-$45.000,00',
     );
     await fireEvent.press(screen.getByTestId('movement-back-to-history'));
     expect(await screen.findByTestId('movement-history')).toBeTruthy();

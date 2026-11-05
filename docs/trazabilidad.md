@@ -21,7 +21,7 @@ criterio derivado figura en su columna «Origen».
 | HU8 Administrar categorías de movimientos financieros | CA01–CA08 (CA07 con subcriterios a, b, c) | 06 | Implementada en la rama `e06/hu8-administrar-categorias` (2026-11-04), sin integrar en `main`; CA01–CA06, CA07a y CA07b verificados en Jest; CA07c y CA08 parciales previstos (E07 y E08); validación en emulador pendiente |
 | HU4 Registrar y editar movimiento financiero | CA01–CA13 | 07 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU5 Consultar historia de movimientos financieros | CA01–CA07 | 08 | Propuesta implementada; pendiente de revisión y validación en emulador |
-| HU6 Visualizar balance financiero | CA01–CA04 | 09 | Pendiente |
+| HU6 Visualizar balance financiero | CA01–CA04 | 09 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU7 Capturar gasto mediante factura o comprobante | CA01–CA12 | 10 | Pendiente |
 | HU9 Consultar análisis financiero | CA01–CA06 | 11 | Pendiente |
 | HU10 Consultar recomendaciones financieras automáticas | CA01–CA06 (CA02 con subcriterios a, b, c) | 12 | Pendiente |
@@ -382,6 +382,18 @@ sin validación en emulador.
 | HU5-CA05 | Al hacer clic en "Eliminar", se despliega un modal flotante emergente con los botones "Cancelar" y "Confirmar" y con la pregunta: "¿Está seguro de eliminar este movimiento?" con el texto aclaratorio "Esta acción es irreversible y afectará su balance.". | C |
 | HU5-CA06 | Al presionar "Confirmar" en el modal, el registro se elimina de la base de datos local y la lista se actualiza automáticamente mostrando el mensaje: "Movimiento eliminado correctamente". | C, I |
 | HU5-CA07 | Al hacer clic en "Editar", el sistema redirige al formulario (HU4) cargando los datos del movimiento seleccionado. | C, `App.test.tsx` |
+
+## HU6 — criterios de aceptación (Etapa 09)
+
+Transcripción de los criterios de HU6. Verificación: U (unitaria), C (componente), I (integración
+con SQLite). Decisiones en `decisiones-etapa-09.md`. Estado: propuesta sin validación en emulador.
+
+| Criterio | Texto | Verificación |
+|---|---|---|
+| HU6-CA01 | El cálculo del balance consolidado debe realizarse dinámicamente y en tiempo real mediante la fórmula: Balance = sum(Ingresos) - sum(Gastos) de los registros del usuario. | I, C, `MovementHistoryScreen.test.tsx` |
+| HU6-CA02 | Los valores monetarios deben mostrarse con el formato de moneda estándar local con separador de miles y dos decimales (p. ej., $1.250.000,00). | U, `movementRules.test.ts` |
+| HU6-CA03 | Si el resultado del balance es negativo, el valor del balance debe resaltarse visualmente en color rojo. | C |
+| HU6-CA04 | Los valores de Ingresos, Gastos y Balance deben recalcularse automáticamente en tiempo real ante cualquier evento de creación, edición o eliminación de un movimiento. | C; creación y edición al volver al historial |
 
 ## Etapa 01 — criterios de cierre (no son criterios de historias)
 

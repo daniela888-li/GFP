@@ -6,6 +6,7 @@ import {
 } from '@testing-library/react-native';
 import { MovementManagementService } from '../../src/business/movements/movementManagement';
 import { AnalysisScreen } from '../../src/presentation/analysis/AnalysisScreen';
+import { RecommendationsScreen } from '../../src/presentation/recommendations/RecommendationsScreen';
 import { SessionManager } from '../../src/services/session/sessionManager';
 import { nodeRandomBytes } from '../../testing/nodeSqliteDatabase';
 import {
@@ -138,5 +139,56 @@ describe('HU9 screen', () => {
         '$999,00',
       ),
     );
+  });
+});
+
+describe('HU10 screen', () => {
+  async function renderRecommendations(movements: string[][]) {
+    const context = await setup(movements);
+    await render(
+      <RecommendationsScreen
+        gateway={context.service}
+        now={() => NOW}
+        onOpenHistory={context.onOpenHistory}
+        onSessionExpired={jest.fn()}
+        session={context.session}
+      />,
+    );
+    return context;
+  }
+
+  test('shows the literal empty state and the disclaimer', async () => {
+    await renderRecommendations([]);
+    expect(
+      await screen.findByText(
+        '¡Todo en orden! No hay recomendaciones o alertas por el momento.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByTestId('recommendations-disclaimer')).toHaveTextContent(
+      /no constituyen asesoramiento financiero profesional/,
+    );
+  });
+
+  test('shows a card that opens the history with its filters', async () => {
+    const { onOpenHistory } = await renderRecommendations([
+      ['expense', '100', '03/11/2026', 'food'],
+    ]);
+    await fireEvent.press(
+      await screen.findByTestId('recommendation-open-negative-balance'),
+    );
+    expect(onOpenHistory).toHaveBeenCalledWith({
+      from: '01/11/2026',
+      to: '30/11/2026',
+      type: 'expense',
+      categoryId: '',
+    });
+  });
+
+  test('Descartar removes the card', async () => {
+    await renderRecommendations([['expense', '100', '03/11/2026', 'food']]);
+    await fireEvent.press(
+      await screen.findByTestId('recommendation-dismiss-negative-balance'),
+    );
+    expect(screen.queryByTestId('recommendation-negative-balance')).toBeNull();
   });
 });

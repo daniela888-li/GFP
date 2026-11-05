@@ -240,7 +240,7 @@ describe('App startup and navigation (A-W9, G-07, HU2)', () => {
       Object.values(ROUTE_DEFINITIONS)
         .filter(route => route.implemented)
         .map(route => route.story),
-    ).toEqual(['HU1', 'HU2', 'HU3', 'HU4', 'HU5', 'HU7', 'HU8', 'HU9']);
+    ).toEqual(['HU1', 'HU2', 'HU3', 'HU4', 'HU5', 'HU7', 'HU8', 'HU9', 'HU10']);
   });
 });
 
@@ -320,7 +320,7 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
     await fireEvent.press(screen.getByTestId('tab-financialAnalysis'));
     expect(await screen.findByTestId('analysis-screen')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('tab-recommendations'));
-    expect(await screen.findByTestId('provisional-HU10')).toBeTruthy();
+    expect(await screen.findByTestId('recommendations-screen')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('tab-movementHistory'));
     expect(await screen.findByTestId('movement-history')).toBeTruthy();
   });
@@ -347,7 +347,7 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
     expect(await screen.findByTestId('movement-history')).toBeTruthy();
   });
 
-  test('the Android back button returns from a provisional screen to the history', async () => {
+  test('the Android back button returns from Recomendaciones to the history', async () => {
     const listeners: Array<Parameters<typeof BackHandler.addEventListener>[1]> =
       [];
     const spy = jest
@@ -358,7 +358,7 @@ describe('HU4 flow from the history (E07-D3, E07-D4, E07-D7)', () => {
       });
     await login();
     await fireEvent.press(screen.getByTestId('tab-recommendations'));
-    await screen.findByTestId('provisional-HU10');
+    await screen.findByTestId('recommendations-screen');
     await act(async () => {
       listeners.at(-1)!({ type: 'hardwareBackPress', timeStamp: 0 });
     });

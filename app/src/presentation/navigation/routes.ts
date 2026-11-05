@@ -75,7 +75,7 @@ export const ROUTE_DEFINITIONS: Record<RouteName, RouteDefinition> = {
   recommendations: {
     story: 'HU10',
     title: 'Recomendaciones',
-    implemented: false,
+    implemented: true,
     requiresSession: true,
   },
 };

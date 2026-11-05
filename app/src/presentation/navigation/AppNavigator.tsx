@@ -17,6 +17,7 @@ import { MovementSuccessScreen } from '../movements/MovementSuccessScreen';
 import { MOVEMENT_TEXTS } from '../movements/movementTexts';
 import { PasswordRecoveryScreen } from '../recovery/PasswordRecoveryScreen';
 import { ReceiptCaptureScreen } from '../receipts/ReceiptCaptureScreen';
+import { RecommendationsScreen } from '../recommendations/RecommendationsScreen';
 import { RegistrationWizard } from '../registration/RegistrationWizard';
 import { ProvisionalScreen } from '../screens/ProvisionalScreen';
 import {
@@ -217,6 +218,16 @@ export function AppNavigator({ services }: { services: AppServices }) {
       <AnalysisScreen
         gateway={services.movements}
         onNewMovement={() => setRoute(ROUTES.movementForm)}
+        onOpenHistory={openFilteredHistory}
+        onSessionExpired={expireSession}
+        session={session}
+      />,
+    );
+  }
+  if (visible === ROUTES.recommendations && session !== null) {
+    return withTabs(
+      <RecommendationsScreen
+        gateway={services.movements}
         onOpenHistory={openFilteredHistory}
         onSessionExpired={expireSession}
         session={session}

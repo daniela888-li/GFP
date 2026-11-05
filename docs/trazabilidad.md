@@ -22,7 +22,7 @@ criterio derivado figura en su columna «Origen».
 | HU4 Registrar y editar movimiento financiero | CA01–CA13 | 07 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU5 Consultar historia de movimientos financieros | CA01–CA07 | 08 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU6 Visualizar balance financiero | CA01–CA04 | 09 | Propuesta implementada; pendiente de revisión y validación en emulador |
-| HU7 Capturar gasto mediante factura o comprobante | CA01–CA12 | 10 | Pendiente |
+| HU7 Capturar gasto mediante factura o comprobante | CA01–CA12 | 10 | Propuesta implementada; pendiente de revisión y validación en emulador |
 | HU9 Consultar análisis financiero | CA01–CA06 | 11 | Pendiente |
 | HU10 Consultar recomendaciones financieras automáticas | CA01–CA06 (CA02 con subcriterios a, b, c) | 12 | Pendiente |
 | **Total** | **99** | | |
@@ -394,6 +394,26 @@ con SQLite). Decisiones en `decisiones-etapa-09.md`. Estado: propuesta sin valid
 | HU6-CA02 | Los valores monetarios deben mostrarse con el formato de moneda estándar local con separador de miles y dos decimales (p. ej., $1.250.000,00). | U, `movementRules.test.ts` |
 | HU6-CA03 | Si el resultado del balance es negativo, el valor del balance debe resaltarse visualmente en color rojo. | C |
 | HU6-CA04 | Los valores de Ingresos, Gastos y Balance deben recalcularse automáticamente en tiempo real ante cualquier evento de creación, edición o eliminación de un movimiento. | C; creación y edición al volver al historial |
+
+## HU7 — criterios de aceptación (Etapa 10)
+
+Transcripción de los criterios de HU7. Verificación: U (unitaria), C (componente), I (integración
+con SQLite). Decisiones en `decisiones-etapa-10.md`. Estado: propuesta sin validación en emulador.
+
+| Criterio | Texto | Verificación |
+|---|---|---|
+| HU7-CA01 | El sistema debe permitir capturar una foto directamente desde la cámara o seleccionar una imagen existente desde la galería local del dispositivo. | C con adaptador simulado; nativo pendiente |
+| HU7-CA02 | La imagen debe pertenecer a un formato válido (‘.jpg’, ‘.jpeg’, ‘.png’) y no superar un tamaño máximo de 5 MB. De lo contrario, muestra el mensaje: "Formato o tamaño de imagen no soportado. Usa una imagen JPG o PNG de máximo 5 MB.". | U, C |
+| HU7-CA03 | Al presionar “Tomar fotografia”, la aplicación debe procesar la imagen mediante el servicio de OCR para extraer los siguientes campos clave: Monto, Fecha y Comercio/Descripción. | U, C (E10-D1); calidad no evaluada |
+| HU7-CA04 | Una vez procesada la imagen, el sistema debe desplegar en la misma pantalla: la vista previa de la fotografía; la barra de botones en línea (Cancelar, Reintentar, Continuar); la tarjeta de resumen con los datos extraídos, ubicada debajo de los botones en línea. | C |
+| HU7-CA05 | Ninguna transacción leída por OCR debe guardarse de forma automática en la base de datos sin la revisión y confirmación explícita del usuario. | C, `App.test.tsx` |
+| HU7-CA06 | Si al finalizar el procesamiento de la imagen, ningún dato pudo ser identificado, se mostrará la previsualización con un mensaje de advertencia: "No se pudo leer la información de la imagen. Por favor, intente con otra imagen o continúe para ingresar los datos manualmente". | C |
+| HU7-CA07 | Si el OCR identifica total o parcialmente la información (ej. detecta el monto pero no la fecha), cargará únicamente los datos detectados y dejará los campos restantes en blanco. | C |
+| HU7-CA08 | Si tras un fallo de lectura (ningún dato capturado) el usuario hace clic en el botón “Continuar”, el sistema redirigirá al formulario de registro (HU4) fijando el tipo en ‘Gasto’ y los demás campos totalmente limpios para su llenado manual. | C |
+| HU7-CA09 | Al presionar "Continuar" con datos extraídos (parcial o totalmente), el sistema redirigirá al formulario de registro (HU4) fijando el tipo en Gasto y precargando los campos reconocidos para su edición final antes de guardar. | C, `App.test.tsx` |
+| HU7-CA10 | El usuario puede modificar o corregir cualquier campo precargado en la vista del formulario (HU4) antes de presionar el botón "Registrar". | C (E07-D2) |
+| HU7-CA11 | Al presionar “Reintentar”, la vista restablece el estado inicial, permitiendo capturar o subir una nueva imagen. | C |
+| HU7-CA12 | Al presionar “Cancelar”, se aborta el flujo y se regresa a la pantalla de historial (HU5). | C |
 
 ## Etapa 01 — criterios de cierre (no son criterios de historias)
 
